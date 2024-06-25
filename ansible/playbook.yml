@@ -1,0 +1,22 @@
+---
+- hosts: all
+  become: true
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+      when: ansible_os_family == "Debian"
+
+    - name: Install PostgreSQL client
+      package:
+        name: postgresql-client
+        state: present
+
+    - name: Verify psql installation
+      command: psql --version
+      register: psql_version
+      changed_when: false
+
+    - name: Display psql version
+      debug:
+        var: psql_version.stdout

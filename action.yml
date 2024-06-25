@@ -1,0 +1,46 @@
+name: 'Install PSQL Client'
+description: 'Install PostgreSQL client using Ansible'
+inputs:
+  target_host:
+    description: 'Target host IP or hostname'
+    required: true
+  ssh_user:
+    description: 'SSH username'
+    required: true
+  ssh_private_key:
+    description: 'SSH private key'
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/checkout@v2
+    
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'
+    
+    - name: Install Ansible
+      run: pip install ansible
+      shell: bash
+    
+    - name: Create SSH key file
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ inputs.ssh_private_key }}" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+      shell: bash
+    
+    - name: Run Ansible playbook
+      run: |
+        export TARGET_HOST="${{ inputs.target_host }}"
+        export SSH_USER="${{ inputs.ssh_user }}"
+        export SSH_PRIVATE_KEY_PATH="~/.ssh/id_rsa"
+        ansible-playbook -i ansible/inventory.yml ansible/playbook.yml
+      shell: bash
+
+    - name: Clean up SSH key
+      if: always()
+      run: rm -f ~/.ssh/id_rsa
+      shell: bash
